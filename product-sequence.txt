@@ -1,0 +1,36 @@
+@startuml
+!pragma teoz true
+
+header Sequence Diagram
+title Client-side Product Retrieval / Coordinator-Driven Product Updates
+footer Conduit Hodlings, LLC - 2025 - All Rights Restored
+
+autonumber
+
+actor Customer as Customer
+participant "<<Client>>" as Client
+participant "<<Relay>>" as Relay
+participant "<<Nostr Commerce Coordinator>>" as Coordinator
+actor Merchant as Merchant
+
+Customer -> Client: Visit Site
+
+' Initial Query
+Client -> Relay: Subscribe to Product Events (kind 30402) via WebSocket
+activate Client
+Client <-- Relay: Return Product Events
+Client <-- Relay: Return EOSE
+
+' Product Added / Updated from C3
+Coordinator <- Merchant: Create new Product
+Relay <- Coordinator: Post new Product Event (kind 30402)
+Client <-- Relay: Return new Product Event
+
+Coordinator <- Merchant: Update existing Product
+Relay <- Coordinator: Post updated Product Event (kind 30402)
+Relay -> Relay: Replace old Product Event \nwith new Product Event
+Client <-- Relay: Return updated Product Event
+
+deactivate Client
+
+@enduml

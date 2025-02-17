@@ -1,0 +1,76 @@
+@startuml
+!pragma teoz true
+
+header Sequence Diagram
+title Automatic Checkout Processing Pipepine (Lightning Payments)
+footer Conduit Hodlings, LLC - 2025 - All Rights Restored
+
+autonumber
+
+actor Customer as Customer
+participant "<<Client>>" as Client
+participant "<<Relay>>" as Relay
+participant "<<Nostr Commerce Coordinator>>" as Coordinator
+database "<<Database>>" as Database
+participant "<<Payment Service>>" as PaymentService
+participant "<<Fulfillment Service>>" as FulfillmentService
+
+Relay <- Coordinator: Subscribe to NIP-17 events addressed to Merchant Npub
+activate Coordinator
+
+Client -> Relay: Subscribe to NIP-17 events for Customer Npub
+Customer -> Client: Add Product(s) to Cart
+Customer -> Client: Start Checkout
+activate Client
+
+Client -> Relay: Send "Order Creation" event (NIP-17, kind: 16, type: 1)
+Client -> Client: Start "Waiting for Merchant to send Invoice..." loading UI
+note left
+end note
+note left
+    A 10-second timeout will trigger
+    the display of a message such as
+    "If Merchant has automatic Checkout
+    enabled, you'll receive a Payment Request
+    almost-immediately. If not, then the Merchant
+    will send a Manual Payment Request, instead."
+
+    Client-received Payment Request events
+    post-Timeout will trigger an in-client notification, instead.
+end note
+
+Relay -> Coordinator: Send "Order Creation" event
+
+alt NIP-17 event is kind: 16, type:1 ("Order Creation" event)
+    Coordinator -> Database: Query - Table: Orderevents - Key: eventID
+    Database --> Coordinator: Return event or null
+    note left
+        If an event is found, then this Order
+        is being processed, or has already been
+        processed. Ignore it.
+    end note
+    alt Order event doesn't exist in database
+        Coordinator -> PaymentService: Request Invoice for Order
+        PaymentService --> Coordinator: Return Invoice for Order
+        Coordinator -> Coordinator: Generate and sign "Payment Request" event\n(NIP-17, kind: 16, type: 2) addressed to Customer
+        Coordinator -> Relay: Post "Payment Request" event
+        Coordinator -> Database: Store event with "Status: Awaiting Payment"
+        Relay --> Client: Return "Payment Request" event
+        Client -> Client: Display QR Code and raw Lightning invoice
+        Customer -> Client: Pay Invoice
+        Client -> PaymentService: Payment Service is notified via Lightning network
+        PaymentService -> Coordinator: Notify that payment was received via Webhook
+        Coordinator -> Coordinator: Generate and sign "Payment Confirmed + Receipt" event\n(NIP-17, kind: 17) addressed to Customer
+        Coordinator -> Relay: Post "Payment Confirmed + Receipt" event
+        Relay --> Client: Return "Payment Confirmed + Receipt" event
+        Client -> Client: Handle payment confirmation
+        Coordinator -> FulfillmentService: Post order fulfillment information
+        FulfillmentService --> Coordinator: Return fulfillment details
+        Coordinator -> Coordinator: Generate and sign "Shipping Information" event (NIP-17, kind: 16, type: 4)
+        Coordinator -> Relay: Post "Shipping Information" event
+        Relay --> Client: Return "Shipping Information" event
+        Client -> Client: Handle shipping update
+    end
+end
+
+@enduml
