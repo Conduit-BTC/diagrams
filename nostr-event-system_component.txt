@@ -16,6 +16,7 @@ node "Coordinator - Server App" {
         [Event Factory] as EventFactory
     }
     EventRouter -> [(Various Controllers)]
+    EventFactory -right-> () "processNewEvent()"
 }
 
 node RelayPool
