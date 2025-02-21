@@ -1,0 +1,24 @@
+@startuml
+
+package "Checkout System" {
+    [Checkout Controller] as CheckoutController
+    [Payment Service] as PaymentService
+    [Payment Processor Interface] as PaymentProcessorInterface
+    [Fulfillment Service] as FulfillmentService
+    [Fulfillment Provider Interface] as FulfillmentProviderInterface
+}
+
+[Event Router\n(from Nostr Event System)] as EventRouter
+[Persistence Service] as PersistenceService
+database Database
+
+EventRouter -> CheckoutController
+CheckoutController -down-> [Event Factory (alias)]
+CheckoutController -down-> PaymentService
+PaymentService -down-> PaymentProcessorInterface
+CheckoutController -down-> FulfillmentService
+FulfillmentService -down-> FulfillmentProviderInterface
+CheckoutController -> PersistenceService
+PersistenceService -> Database
+
+@enduml

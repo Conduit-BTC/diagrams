@@ -1,0 +1,33 @@
+@startuml
+
+node "Coordinator - Server App" {
+    portin "wss://"
+    package "Nostr Event System" {
+        [WebSocket Service] as WebSocketService
+        [Event Parser] as EventParser
+        [Event Router] as EventRouter
+        [Event Broadcaster] as EventBroadcaster
+        [Event Signer] as EventSigner
+        [Key Service] as KeyService
+        [Event Factory] as EventFactory
+    }
+    EventRouter -> [(Various Controllers)]
+}
+
+node RelayPool
+
+cloud {
+    [Merchant UI - Web App] as MerchantUI
+}
+
+"wss://" - WebSocketService
+RelayPool <-down-> "wss://"
+MerchantUI <-down-> "wss://"
+WebSocketService <-down- EventBroadcaster
+WebSocketService -right-> EventParser
+EventParser -down-> EventRouter
+EventSigner -down-> KeyService
+EventFactory -down-> EventSigner
+EventFactory -up-> EventBroadcaster
+
+@enduml
