@@ -1,5 +1,9 @@
 @startuml
 
+header Component Diagram
+title Nostr Commerce Coordinator - Checkout System
+footer Conduit Hodlings, LLC - 2025 - All Rights Restored
+
 package "Checkout System" {
     [Checkout Controller] as CheckoutController
     [Payment Service] as PaymentService
