@@ -27,10 +27,13 @@ jobs:
           sed -i '/<!-- AUTO-GENERATED-IMAGES -->/r temp_readme.md' updated_README.md
 
       - name: Commit and Push Changes
+        env:
+          TOKEN: ${{ secrets.GH_PAT }}
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git remote set-url origin https://x-access-token:${TOKEN}@github.com/${{ github.repository }}
           mv updated_README.md README.md
           git add README.md
           git commit -m "Auto-update README with image links" || echo "No changes to commit"
-          git push
+          git push origin main
