@@ -1,5 +1,9 @@
 @startuml
 
+header Component Diagram
+title Nostr Commerce Coordinator - Nostr Event System (isolated)
+footer Conduit Hodlings, LLC - 2025 - All Rights Restored
+
 node "Coordinator - Server App" {
     portin "wss://"
     package "Nostr Event System" {
