@@ -1,0 +1,36 @@
+name: Auto-update README with image links
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  update-readme:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Generate Image Links
+        run: |
+          echo "## Diagrams" > temp_readme.md
+          echo "" >> temp_readme.md
+          find out/ -type f -name "*.png" | while read filepath; do
+            echo "![]($filepath)" >> temp_readme.md
+          done
+          echo "" >> temp_readme.md
+
+          # Replace the auto-generated section in README.md
+          awk '/<!-- AUTO-GENERATED-IMAGES -->/{flag=1;print;while(getline line){if(line~"<!-- END-AUTO-GENERATED-IMAGES -->"){flag=0;print line;break}};next}1' README.md > updated_README.md
+          sed -i '/<!-- AUTO-GENERATED-IMAGES -->/r temp_readme.md' updated_README.md
+
+      - name: Commit and Push Changes
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          mv updated_README.md README.md
+          git add README.md
+          git commit -m "Auto-update README with image links" || echo "No changes to commit"
+          git push
