@@ -26,7 +26,7 @@ cloud {
 
 "wss://" - WebSocketService
 RelayPool <-down-> "wss://"
-MerchantUI <-down-> "wss://"
+MerchantUI -down-> "wss://"
 WebSocketService <-down- EventBroadcaster
 WebSocketService -right-> EventParser
 EventParser -down-> EventRouter
